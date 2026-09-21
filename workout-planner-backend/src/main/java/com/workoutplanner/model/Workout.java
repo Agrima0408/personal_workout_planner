@@ -1,12 +1,22 @@
 package com.workoutplanner.model;
 
+import jakarta.persistence.*;
+
 import java.util.List;
 
+@Entity
+@Table(name = "workouts")
 public class Workout {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     private String day;
     private String title;
     private String duration;
+
+    @Transient
     private List<Exercise> exercises;
 
     public Workout() {
@@ -17,6 +27,14 @@ public class Workout {
         this.title = title;
         this.duration = duration;
         this.exercises = exercises;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getDay() {

@@ -22,7 +22,7 @@ public class WorkoutService {
     }
 
     public Workout getWorkoutByDay(String day) {
-        return workoutRepository.findByDay(day);
+        return workoutRepository.findByDayIgnoreCase(day).orElse(null);
     }
 
     public Workout createWorkout(Workout workout) {

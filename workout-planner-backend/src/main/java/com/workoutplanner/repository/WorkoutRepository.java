@@ -1,29 +1,11 @@
 package com.workoutplanner.repository;
 
 import com.workoutplanner.model.Workout;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Optional;
 
-@Repository
-public class WorkoutRepository {
+public interface WorkoutRepository extends JpaRepository<Workout, Long> {
 
-    private final List<Workout> workouts = new ArrayList<>();
-
-    public List<Workout> findAll() {
-        return workouts;
-    }
-
-    public Workout findByDay(String day) {
-        return workouts.stream()
-                .filter(workout -> workout.getDay().equalsIgnoreCase(day))
-                .findFirst()
-                .orElse(null);
-    }
-
-    public Workout save(Workout workout) {
-        workouts.add(workout);
-        return workout;
-    }
+    Optional<Workout> findByDayIgnoreCase(String day);
 }
