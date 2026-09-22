@@ -26,6 +26,11 @@ public class WorkoutService {
     }
 
     public Workout createWorkout(Workout workout) {
+        if (workout.getExercises() != null) {
+            for (Exercise exercise : workout.getExercises()) {
+                exercise.setWorkout(workout);
+            }
+        }
         return workoutRepository.save(workout);
     }
 
@@ -155,6 +160,7 @@ public class WorkoutService {
                 mondayExercises
         );
 
+        attachExercisesToWorkout(monday);
         workoutRepository.save(monday);
 
 
@@ -262,6 +268,7 @@ public class WorkoutService {
                 tuesdayExercises
         );
 
+        attachExercisesToWorkout(tuesday);
         workoutRepository.save(tuesday);
 
         // =========================
@@ -318,6 +325,7 @@ public class WorkoutService {
                 wednesdayExercises
         );
 
+        attachExercisesToWorkout(wednesday);
         workoutRepository.save(wednesday);
 
 
@@ -425,6 +433,7 @@ public class WorkoutService {
                 thursdayExercises
         );
 
+        attachExercisesToWorkout(thursday);
         workoutRepository.save(thursday);
 
         // =========================
@@ -551,6 +560,7 @@ public class WorkoutService {
                 fridayExercises
         );
 
+        attachExercisesToWorkout(friday);
         workoutRepository.save(friday);
 
 
@@ -658,6 +668,7 @@ public class WorkoutService {
                 saturdayExercises
         );
 
+        attachExercisesToWorkout(saturday);
         workoutRepository.save(saturday);
 
 
@@ -695,6 +706,15 @@ public class WorkoutService {
                 sundayExercises
         );
 
+        attachExercisesToWorkout(sunday);
         workoutRepository.save(sunday);
+    }
+
+    private void attachExercisesToWorkout(Workout workout) {
+        if (workout.getExercises() != null) {
+            for (Exercise exercise : workout.getExercises()) {
+                exercise.setWorkout(workout);
+            }
+        }
     }
 }

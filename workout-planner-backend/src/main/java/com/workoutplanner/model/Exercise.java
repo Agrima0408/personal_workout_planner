@@ -1,6 +1,14 @@
 package com.workoutplanner.model;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "exercises")
 public class Exercise {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     private String name;
     private int sets;
@@ -9,6 +17,10 @@ public class Exercise {
     private double preferredWeight;
     private String comments;
     private String youtubeLink;
+
+    @ManyToOne
+    @JoinColumn(name = "workout_id")
+    private Workout workout;
 
     public Exercise() {
     }
@@ -29,6 +41,14 @@ public class Exercise {
         this.preferredWeight = preferredWeight;
         this.comments = comments;
         this.youtubeLink = youtubeLink;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -85,5 +105,13 @@ public class Exercise {
 
     public void setYoutubeLink(String youtubeLink) {
         this.youtubeLink = youtubeLink;
+    }
+
+    public Workout getWorkout() {
+        return workout;
+    }
+
+    public void setWorkout(Workout workout) {
+        this.workout = workout;
     }
 }

@@ -16,7 +16,11 @@ public class Workout {
     private String title;
     private String duration;
 
-    @Transient
+    @OneToMany(
+            mappedBy = "workout",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     private List<Exercise> exercises;
 
     public Workout() {
