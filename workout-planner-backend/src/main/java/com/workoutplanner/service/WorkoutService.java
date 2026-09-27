@@ -35,6 +35,9 @@ public class WorkoutService {
     }
 
     public void loadDefaultWorkouts() {
+        if (workoutRepository.count() > 0) {
+            return;
+        }
 
         // =========================
         // MONDAY
