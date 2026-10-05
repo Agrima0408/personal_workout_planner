@@ -1,0 +1,325 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Anupriya Workout Planner — Version 4</title><style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,Arial;background:#f6f7fb;color:#202124}header{background:linear-gradient(135deg,#7c3aed,#ec4899);color:white;padding:20px;position:sticky;top:0;z-index:3}header h2{margin:0;font-size:21px}header p{margin:5px 0 0;font-size:13px}.wrap{max-width:720px;margin:auto;padding:14px 14px 80px}.tabs,.picker{display:flex;gap:8px;overflow:auto}.tabs{margin-bottom:12px}button{font:inherit;cursor:pointer}.tab,.btn,.picker button{border:0;border-radius:12px;padding:10px 13px;font-weight:700;white-space:nowrap}.tab,.picker button{background:#e9e7ee}.tab.active,.btn.primary,.picker button.sel{background:#7c3aed;color:#fff}.panel{display:none}.panel.active{display:block}.card,.ex{background:white;border-radius:16px;padding:14px;margin:11px 0;box-shadow:0 2px 10px #0001}.ex.done{background:#f0fdf4;border:1px solid #86efac}.note{background:#fff7ed;border-left:4px solid #fb923c;padding:10px;border-radius:8px;font-size:13px}.title{font-weight:750}.small{font-size:12px;color:#6b7280;margin:5px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}input,textarea{width:100%;box-sizing:border-box;padding:9px;border:1px solid #ddd;border-radius:9px;font:inherit}textarea{min-height:52px}.video{display:inline-block;margin-top:8px;color:#dc2626;font-size:13px;font-weight:700;text-decoration:none}table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:8px;border-bottom:1px solid #eee;text-align:left}.danger{background:#fee2e2;color:#991b1b}.row{display:flex;gap:8px;flex-wrap:wrap}
+
+.save-toast{
+  position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.92);
+  background:#fff;border-radius:22px;padding:22px 28px;text-align:center;
+  box-shadow:0 18px 50px #0003;z-index:9999;opacity:0;pointer-events:none;
+  transition:opacity .2s ease,transform .2s ease;min-width:250px;
+}
+.save-toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.save-toast .check{font-size:38px;margin-bottom:6px}
+.save-toast .main{font-size:18px;font-weight:800;color:#7c3aed}
+.save-toast .sub{font-size:12px;color:#6b7280;margin-top:4px}
+</style><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#7c3aed"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="My Workout Planner"><link rel="apple-touch-icon" href="icon-180.png"></head><body><div id="saveToast" class="save-toast"><div class="check">✨</div><div class="main">Workout saved!</div><div class="sub">Great job — keep going 💪</div></div><header><h2>💪 Anupriya's Workout Planner</h2><p>Version 4 • Detailed warm-up & yoga • View any workout day</p></header><div class="wrap">
+<div class="tabs"><button class="tab active" onclick="tab('today',this)">Today</button><button class="tab" onclick="tab('week',this)">Week</button><button class="tab" onclick="tab('progress',this)">Progress</button><button class="tab" onclick="tab('more',this)">More</button></div>
+<section id="today" class="panel active"><div class="card"><h2 id="heading"></h2><div class="note"><b>New in Version 4:</b> Select any day below to see that day's complete workout plan. You are no longer limited to today's workout.</div><h3>Choose a day</h3><div id="picker" class="picker"></div><div id="list"></div><button class="btn primary" onclick="saveDay()">Save workout ✓</button></div></section>
+<section id="week" class="panel"><div class="card"><h2>Weekly Plan</h2><div id="weekTable"></div><p class="small">Go to Today and select any day to see the full detailed exercises.</p></div></section>
+<section id="progress" class="panel"><div class="card"><h2>Body Progress</h2><div class="grid"><input id="pd" type="date"><input id="pw" type="number" step=".1" placeholder="Weight (kg)"><input id="pwaist" type="number" step=".1" placeholder="Waist (cm)"><input id="pf" type="number" step=".1" placeholder="Body fat %"></div><p></p><button class="btn primary" onclick="addProgress()">Add entry</button></div><div class="card" id="history"></div><div class="card"><h2>Workout History</h2><div id="workoutHistory"><p class="small">Loading workout history...</p></div></div><div class="card"><h2>Progress by Date 📅</h2>
+<div class="grid">
+<input id="progressStartDate" type="date">
+<input id="progressEndDate" type="date">
+</div>
+<p class="small">Choose a date range to see every workout entry saved during that period.</p>
+<button class="btn primary" onclick="loadDateProgress()">Show progress</button>
+<div id="dateProgress"><p class="small">Choose dates and tap Show progress.</p></div>
+</div><div class="card"><h2>Exercise Progress 📈</h2><p class="small">Choose one exercise to see its complete saved history over time.</p>
+<div class="grid"><select id="exerciseSelect" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:9px;font:inherit;grid-column:1/-1">
+<option value="">Choose an exercise</option>
+</select></div>
+<div id="exerciseProgress"><p class="small">Choose an exercise to see your progress.</p></div>
+</div></section>
+<section id="more" class="panel"><div class="card"><h2>My Notes</h2><textarea id="notes" placeholder="Energy, knee feedback, weights to increase..."></textarea><p></p><button class="btn primary" onclick="saveNotes()">Save notes</button></div><div class="card"><h2>Backup & Restore</h2><div class="row"><button class="btn primary" onclick="exportData()">Export backup</button><input type="file" accept=".json" onchange="importData(event)"></div><p class="small">Data is stored locally in this browser.</p></div><div class="card"><h2>Reset</h2><button class="btn danger" onclick="resetAll()">Reset all Version 4 data</button></div></section>
+</div><script>
+const API_BASE='http://localhost:8081';
+const W={"Monday": [["Warm-up \u2014 March in Place", "1 min"], ["Warm-up \u2014 Shoulder Rolls", "10 forward + 10 backward"], ["Warm-up \u2014 Arm Circles", "10 each direction"], ["Warm-up \u2014 Cat-Cow", "8\u201310 slow reps"], ["Lat Pulldown", "3 \u00d7 10\u201312"], ["Dumbbell Bench Press", "3 \u00d7 10\u201312"], ["Seated Cable Row", "3 \u00d7 10\u201312"], ["Dead Bug", "2 \u00d7 10 each side"], ["Bird Dog", "2 \u00d7 10 each side"], ["Plank", "2\u20133 \u00d7 20\u201330 sec"], ["Treadmill", "2 km"], ["Yoga \u2014 Child's Pose", "45\u201360 sec"], ["Yoga \u2014 Sphinx Pose", "20\u201330 sec \u00d7 2"], ["Yoga \u2014 Seated Forward Fold", "30 sec"], ["Yoga \u2014 Supine Twist", "30 sec each side"]], "Tuesday": [["Warm-up \u2014 Easy March", "1 min"], ["Warm-up \u2014 Hip Circles", "10 each direction"], ["Warm-up \u2014 Leg Swings", "10 each leg"], ["Warm-up \u2014 Ankle Circles", "10 each direction"], ["Warm-up \u2014 Sit-to-Stand", "10 slow reps"], ["Dumbbell Romanian Deadlift", "3 \u00d7 10\u201312"], ["Glute Bridge", "3 \u00d7 15"], ["Sit-to-Stand from Bench", "3 \u00d7 10"], ["Clamshell", "2 \u00d7 15 each side"], ["Side-Lying Leg Raise", "2 \u00d7 12 each side"], ["Calf Raise", "3 \u00d7 15"], ["Treadmill", "2 km"], ["Yoga \u2014 Low Lunge", "30 sec each side"], ["Yoga \u2014 Figure-4 Stretch", "30 sec each side"], ["Yoga \u2014 Butterfly Pose", "45 sec"]], "Wednesday": [["Warm-up \u2014 March + Arm Swing", "2 min"], ["Warm-up \u2014 Cat-Cow", "8 reps"], ["Treadmill", "2 km comfortable"], ["Yoga \u2014 Mountain Pose", "45 sec"], ["Yoga \u2014 Half Sun Salutation", "4 slow rounds"], ["Yoga \u2014 Child's Pose", "60 sec"], ["Yoga \u2014 Low Lunge", "30 sec each side"], ["Yoga \u2014 Sphinx Pose", "20\u201330 sec \u00d7 2"], ["Yoga \u2014 Supine Twist", "30 sec each side"], ["Yoga \u2014 Savasana", "3\u20135 min"], ["Dead Bug", "2 \u00d7 10 each side"], ["Bird Dog", "2 \u00d7 10 each side"]], "Thursday": [["Warm-up \u2014 March in Place", "1 min"], ["Warm-up \u2014 Arm Circles", "10 each direction"], ["Warm-up \u2014 Hip Hinge Drill", "10 reps"], ["Warm-up \u2014 Hip Circles", "10 each direction"], ["Goblet Squat to Bench", "2\u20133 \u00d7 10"], ["Dumbbell Romanian Deadlift", "3 \u00d7 10\u201312"], ["Lat Pulldown", "3 \u00d7 10\u201312"], ["Chest Press", "3 \u00d7 10\u201312"], ["One-Arm Dumbbell Row", "2 \u00d7 10 each side"], ["Farmer's Walk", "3 \u00d7 30\u201345 sec"], ["Treadmill", "2 km"], ["Yoga \u2014 Child's Pose", "45 sec"], ["Yoga \u2014 Thread the Needle", "30 sec each side"], ["Yoga \u2014 Supine Twist", "30 sec each side"]], "Friday": [["Warm-up \u2014 March", "1 min"], ["Warm-up \u2014 Shoulder Rolls", "10 each direction"], ["Warm-up \u2014 Wall/Bench Push-Up", "8 easy reps"], ["Warm-up \u2014 Cat-Cow", "8 reps"], ["Dumbbell Bench Press", "3 \u00d7 10\u201312"], ["Incline Push-Up on Bench", "3 \u00d7 8\u201312"], ["Seated Cable Row", "3 \u00d7 12"], ["Lat Pulldown", "2 \u00d7 12"], ["Dumbbell Reverse Fly", "2 \u00d7 12 light"], ["Plank", "2\u20133 \u00d7 20\u201330 sec"], ["Dead Bug", "2 \u00d7 10 each side"], ["Treadmill", "2 km"], ["Yoga \u2014 Child's Pose", "60 sec"], ["Yoga \u2014 Thread the Needle", "30 sec each side"], ["Yoga \u2014 Savasana", "2 min"]], "Saturday": [["Warm-up \u2014 Easy Walk/March", "2 min"], ["Warm-up \u2014 Arm Circles", "10 each direction"], ["Warm-up \u2014 Hip Circles", "10 each direction"], ["Warm-up \u2014 Ankle Mobility", "10 each ankle"], ["Dumbbell Romanian Deadlift", "2 \u00d7 12"], ["One-Arm Dumbbell Row", "2 \u00d7 10 each side"], ["Dumbbell Shoulder Press", "2 \u00d7 10"], ["Glute Bridge", "2 \u00d7 15"], ["Farmer's Walk", "2 \u00d7 30 sec"], ["Treadmill", "2 km easy"], ["Yoga \u2014 Half Sun Salutation", "3 slow rounds"], ["Yoga \u2014 Cat-Cow", "8 reps"], ["Yoga \u2014 Child's Pose", "60 sec"], ["Yoga \u2014 Low Lunge", "30 sec each side"], ["Yoga \u2014 Savasana", "3 min"]], "Sunday": [["Rest / Recovery", "Complete rest is fine"], ["Optional Treadmill", "Easy 2 km if you feel good"], ["Recovery \u2014 Cat-Cow", "6\u20138 slow reps"], ["Recovery \u2014 Child's Pose", "60 sec"], ["Recovery \u2014 Butterfly Pose", "45 sec"], ["Recovery \u2014 Supine Twist", "30 sec each side"], ["Recovery \u2014 Savasana", "5 min"]]};const DAYS=Object.keys(W);let selected=DAYS[(new Date().getDay()+6)%7];
+function tab(id,b){document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(id==='progress')loadWorkoutHistory();if(id==='progress'){loadWorkoutHistory();loadExerciseOptions()}}
+function key(i){return 'v4_'+selected+'_'+i}function q(n){return 'https://www.youtube.com/results?search_query='+encodeURIComponent(n+' proper form')}
+function render(){heading.textContent=selected+' — Workout Plan';picker.innerHTML='';DAYS.forEach(d=>{let b=document.createElement('button');b.textContent=d;b.className=d===selected?'sel':'';b.onclick=()=>{selected=d;render()};picker.appendChild(b)});list.innerHTML='';W[selected].forEach((x,i)=>{let d=JSON.parse(localStorage.getItem(key(i))||'{}'),e=document.createElement('div');e.className='ex '+(d.done?'done':'');e.innerHTML=`<label><input type="checkbox" ${d.done?'checked':''} onchange="done(${i},this)"> <span class="title">${i+1}. ${x[0]}</span></label><div class="small">${x[1]}</div><div class="grid"><input id="w${i}" value="${d.w||''}" placeholder="Weight / setting"><input id="r${i}" value="${d.r||''}" placeholder="Actual reps / time"></div><textarea id="c${i}" placeholder="Comments / pain / difficulty">${d.c||''}</textarea><a class="video" target="_blank" href="${q(x[0])}">▶ Watch proper form</a>`;list.appendChild(e)})}
+function done(i,x){let d=JSON.parse(localStorage.getItem(key(i))||'{}');d.done=x.checked;localStorage.setItem(key(i),JSON.stringify(d));x.closest('.ex').classList.toggle('done',x.checked)}
+async function saveDay(){
+  const cards=document.querySelectorAll('.ex');
+
+  // Keep the existing local browser save.
+  W[selected].forEach((x,i)=>{
+    let d=JSON.parse(localStorage.getItem(key(i))||'{}');
+    d.w=document.getElementById('w'+i).value;
+    d.r=document.getElementById('r'+i).value;
+    d.c=document.getElementById('c'+i).value;
+    localStorage.setItem(key(i),JSON.stringify(d));
+  });
+
+  try{
+    const now=new Date();
+    const date=now.getFullYear()+'-'+
+      String(now.getMonth()+1).padStart(2,'0')+'-'+
+      String(now.getDate()).padStart(2,'0');
+
+    let savedCount=0;
+
+    for(let i=0;i<W[selected].length;i++){
+      const weight=document.getElementById('w'+i).value.trim();
+      const reps=document.getElementById('r'+i).value.trim();
+      const comments=document.getElementById('c'+i).value.trim();
+      const checked=cards[i]?.querySelector('input[type="checkbox"]')?.checked;
+
+      if(!weight && !reps && !comments && !checked) continue;
+
+      const payload={
+        date:date,
+        exerciseName:W[selected][i][0],
+        weightUsed:Number(weight)||0,
+        repsCompleted:Number(reps)||0,
+        comments:comments
+      };
+
+      const response=await fetch(API_BASE+'/api/workout-logs',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload)
+      });
+
+      const responseText=await response.text();
+
+      if(!response.ok){
+        throw new Error('HTTP '+response.status+' — '+responseText);
+      }
+
+      let savedRecord=null;
+      try{ savedRecord=JSON.parse(responseText); }catch(e){}
+
+      if(!savedRecord || !savedRecord.id){
+        throw new Error('Backend did not return a saved workout-log record: '+responseText);
+      }
+
+      savedCount++;
+    }
+
+    if(!savedCount){
+      alert('Nothing to save. Enter weight/reps/comments or tick an exercise.');
+      return;
+    }
+
+    // Reset the entered workout values ONLY after the database confirms all saves.
+    W[selected].forEach((x,i)=>{
+      document.getElementById('w'+i).value='';
+      document.getElementById('r'+i).value='';
+      document.getElementById('c'+i).value='';
+
+      const checkbox=cards[i]?.querySelector('input[type="checkbox"]');
+      if(checkbox){
+        checkbox.checked=false;
+        checkbox.closest('.ex')?.classList.remove('done');
+      }
+
+      // Clear the browser-saved workout entry too.
+      localStorage.removeItem(key(i));
+    });
+
+    // Cute success message — no database ID shown.
+    const toast=document.getElementById('saveToast');
+    toast.classList.add('show');
+    setTimeout(()=>toast.classList.remove('show'),1800);
+
+    // Refresh Progress history if the Progress tab is opened later.
+    if(typeof loadWorkoutHistory==='function') loadWorkoutHistory();
+
+  }catch(error){
+    console.error('DATABASE SAVE ERROR:',error);
+    alert('Database save failed. Your workout was not cleared. Open F12 → Console and check the red error.');
+  }
+}
+
+function addProgress(){if(!pd.value||!pw.value)return alert('Enter date and weight');let a=JSON.parse(localStorage.getItem('v4_progress')||'[]');a.unshift([pd.value,pw.value,pwaist.value,pf.value]);localStorage.setItem('v4_progress',JSON.stringify(a));showProgress()}
+function showProgress(){let a=JSON.parse(localStorage.getItem('v4_progress')||'[]');history.innerHTML=a.length?'<table><tr><th>Date</th><th>Weight</th><th>Waist</th><th>Fat</th></tr>'+a.map(x=>`<tr><td>${x[0]}</td><td>${x[1]} kg</td><td>${x[2]||'-'} cm</td><td>${x[3]||'-'}%</td></tr>`).join('')+'</table>':'<p class="small">No entries yet.</p>'}
+async function loadWorkoutHistory(){
+  const box=document.getElementById('workoutHistory');
+  if(!box)return;
+  box.innerHTML='<p class="small">Loading workout history...</p>';
+  try{
+    const response=await fetch(API_BASE+'/api/workout-logs');
+    if(!response.ok)throw new Error('HTTP '+response.status);
+    const logs=await response.json();
+    if(!logs.length){
+      box.innerHTML='<p class="small">No workout history saved yet.</p>';
+      return;
+    }
+    logs.sort((a,b)=>new Date(b.date)-new Date(a.date)||b.id-a.id);
+    box.innerHTML='<table><tr><th>Date</th><th>Exercise</th><th>Weight</th><th>Reps</th><th>Comments</th><th></th></tr>'+
+      logs.map(x=>'<tr><td>'+x.date+'</td><td>'+x.exerciseName+'</td><td>'+x.weightUsed+'</td><td>'+x.repsCompleted+'</td><td>'+(x.comments||'-')+'</td><td><button class="btn" style="padding:6px 9px" onclick="editWorkoutLog('+x.id+',\''+String(x.exerciseName).replace(/'/g,"\\'")+'\',\''+x.date+'\','+x.weightUsed+','+x.repsCompleted+',\''+String(x.comments||'').replace(/'/g,"\\'")+'\')">✏️</button> <button class="btn danger" style="padding:6px 9px" onclick="deleteWorkoutLog('+x.id+')">🗑️</button></td></tr>').join('')+
+      '</table>';
+  }catch(error){
+    console.error('WORKOUT HISTORY ERROR:',error);
+    box.innerHTML='<p class="small">Could not load workout history. Make sure the backend is running on port 8081.</p>';
+  }
+}
+async function loadExerciseOptions(){
+  const select=document.getElementById('exerciseSelect');
+  if(!select)return;
+  try{
+    const response=await fetch(API_BASE+'/api/workout-logs');
+    if(!response.ok)throw new Error('HTTP '+response.status);
+    const logs=await response.json();
+    const exercises=[...new Set(logs.map(x=>x.exerciseName))].sort();
+    const current=select.value;
+    select.innerHTML='<option value="">Choose an exercise</option>'+
+      exercises.map(name=>'<option value="'+name.replace(/"/g,'&quot;')+'">'+name+'</option>').join('');
+    if(exercises.includes(current))select.value=current;
+    select.onchange=()=>loadExerciseProgress(select.value);
+  }catch(error){
+    console.error('EXERCISE OPTIONS ERROR:',error);
+  }
+}
+
+async function loadExerciseProgress(exerciseName){
+  const box=document.getElementById('exerciseProgress');
+  if(!box)return;
+  if(!exerciseName){
+    box.innerHTML='<p class="small">Choose an exercise to see your progress.</p>';
+    return;
+  }
+  box.innerHTML='<p class="small">Loading '+exerciseName+'...</p>';
+  try{
+    const response=await fetch(API_BASE+'/api/workout-logs/exercise/'+encodeURIComponent(exerciseName));
+    if(!response.ok)throw new Error('HTTP '+response.status);
+    const logs=await response.json();
+    logs.sort((a,b)=>new Date(a.date)-new Date(b.date)||a.id-b.id);
+    if(!logs.length){
+      box.innerHTML='<p class="small">No saved sessions for this exercise yet.</p>';
+      return;
+    }
+    box.innerHTML='<table><tr><th>Date</th><th>Weight</th><th>Reps</th><th>Comments</th><th></th></tr>'+
+      logs.map(x=>'<tr><td>'+x.date+'</td><td>'+x.weightUsed+'</td><td>'+x.repsCompleted+'</td><td>'+(x.comments||'-')+'</td><td><button class="btn" style="padding:6px 9px" onclick="editWorkoutLog('+x.id+',\''+String(x.exerciseName).replace(/'/g,"\\'")+'\',\''+x.date+'\','+x.weightUsed+','+x.repsCompleted+',\''+String(x.comments||'').replace(/'/g,"\\'")+'\')">✏️</button> <button class="btn danger" style="padding:6px 9px" onclick="deleteWorkoutLog('+x.id+')">🗑️</button></td></tr>').join('')+
+      '</table>';
+  }catch(error){
+    console.error('EXERCISE PROGRESS ERROR:',error);
+    box.innerHTML='<p class="small">Could not load exercise progress.</p>';
+  }
+}
+
+async function editWorkoutLog(id,exerciseName,date,weight,reps,comments){
+  const newWeight=prompt('Weight / setting:',weight ?? '');
+  if(newWeight===null)return;
+  const newReps=prompt('Actual reps / time:',reps ?? '');
+  if(newReps===null)return;
+  const newComments=prompt('Comments:',comments ?? '');
+  if(newComments===null)return;
+
+  try{
+    const response=await fetch(API_BASE+'/api/workout-logs/'+id,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        date:date,
+        exerciseName:exerciseName,
+        weightUsed:Number(newWeight)||0,
+        repsCompleted:Number(newReps)||0,
+        comments:newComments
+      })
+    });
+
+    if(!response.ok)throw new Error('HTTP '+response.status);
+
+    const toast=document.getElementById('saveToast');
+    toast.querySelector('.check').textContent='✏️';
+    toast.querySelector('.main').textContent='Workout updated!';
+    toast.querySelector('.sub').textContent='Your changes are saved ✨';
+    toast.classList.add('show');
+
+    setTimeout(()=>{
+      toast.classList.remove('show');
+      toast.querySelector('.check').textContent='✨';
+      toast.querySelector('.main').textContent='Workout saved!';
+      toast.querySelector('.sub').textContent='Great job — keep going 💪';
+    },1800);
+
+    loadWorkoutHistory();
+    const select=document.getElementById('exerciseSelect');
+    if(select && select.value) loadExerciseProgress(select.value);
+  }catch(error){
+    console.error('UPDATE WORKOUT ERROR:',error);
+    alert('Could not update this workout entry. Check F12 → Console.');
+  }
+}
+
+async function deleteWorkoutLog(id){
+  if(!confirm('Delete this workout entry?\n\nThis cannot be undone.')) return;
+
+  try{
+    const response=await fetch(API_BASE+'/api/workout-logs/'+id,{method:'DELETE'});
+    if(!response.ok)throw new Error('HTTP '+response.status);
+
+    const toast=document.getElementById('saveToast');
+    toast.querySelector('.check').textContent='🗑️';
+    toast.querySelector('.main').textContent='Workout deleted!';
+    toast.querySelector('.sub').textContent='The entry has been removed ✨';
+    toast.classList.add('show');
+
+    setTimeout(()=>{
+      toast.classList.remove('show');
+      toast.querySelector('.check').textContent='✨';
+      toast.querySelector('.main').textContent='Workout saved!';
+      toast.querySelector('.sub').textContent='Great job — keep going 💪';
+    },1800);
+
+    loadWorkoutHistory();
+    const select=document.getElementById('exerciseSelect');
+    if(select && select.value) loadExerciseProgress(select.value);
+    loadExerciseOptions();
+  }catch(error){
+    console.error('DELETE WORKOUT ERROR:',error);
+    alert('Could not delete this workout entry. Check F12 → Console.');
+  }
+}
+
+async function loadDateProgress(){
+  const start=document.getElementById('progressStartDate').value;
+  const end=document.getElementById('progressEndDate').value;
+  const box=document.getElementById('dateProgress');
+
+  if(!start || !end){
+    box.innerHTML='<p class="small">Please choose both dates.</p>';
+    return;
+  }
+  if(start>end){
+    box.innerHTML='<p class="small">Start date cannot be after end date.</p>';
+    return;
+  }
+
+  box.innerHTML='<p class="small">Loading progress...</p>';
+
+  try{
+    const response=await fetch(
+      API_BASE+'/api/workout-logs/range?startDate='+encodeURIComponent(start)+'&endDate='+encodeURIComponent(end)
+    );
+    if(!response.ok)throw new Error('HTTP '+response.status);
+
+    const logs=await response.json();
+    logs.sort((a,b)=>new Date(a.date)-new Date(b.date)||a.id-b.id);
+
+    if(!logs.length){
+      box.innerHTML='<p class="small">No workout entries found for these dates.</p>';
+      return;
+    }
+
+    box.innerHTML='<p class="small"><b>'+logs.length+'</b> workout entries found.</p>'+
+      '<table><tr><th>Date</th><th>Exercise</th><th>Weight</th><th>Reps</th><th>Comments</th></tr>'+
+      logs.map(x=>'<tr><td>'+x.date+'</td><td>'+x.exerciseName+'</td><td>'+x.weightUsed+'</td><td>'+x.repsCompleted+'</td><td>'+(x.comments||'-')+'</td></tr>').join('')+
+      '</table>';
+  }catch(error){
+    console.error('DATE PROGRESS ERROR:',error);
+    box.innerHTML='<p class="small">Could not load progress. Make sure the backend is running on port 8081.</p>';
+  }
+}
+
+function saveNotes(){localStorage.setItem('v4_notes',notes.value);alert('Saved ✓')}
+function exportData(){let o={};for(let i=0;i<localStorage.length;i++){let k=localStorage.key(i);if(k.startsWith('v4_'))o[k]=localStorage.getItem(k)}let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o,null,2)],{type:'application/json'}));a.download='anupriya-workout-v4-backup.json';a.click()}
+function importData(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{Object.entries(JSON.parse(r.result)).forEach(([k,v])=>localStorage.setItem(k,v));location.reload()}catch(x){alert('Invalid backup file')}};r.readAsText(f)}
+function resetAll(){if(confirm('Delete all Version 4 data?')){Object.keys(localStorage).filter(k=>k.startsWith('v4_')).forEach(k=>localStorage.removeItem(k));location.reload()}}
+const progressToday=new Date();
+const progressWeekAgo=new Date(progressToday);
+progressWeekAgo.setDate(progressToday.getDate()-6);
+document.getElementById('progressEndDate').value=progressToday.toISOString().slice(0,10);
+document.getElementById('progressStartDate').value=progressWeekAgo.toISOString().slice(0,10);
+weekTable.innerHTML='<table><tr><th>Day</th><th>Focus</th></tr>'+DAYS.map(d=>'<tr><td>'+d+'</td><td>'+W[d][0][0]+' → '+W[d][W[d].length-1][0]+'</td></tr>').join('')+'</table>';pd.value=new Date().toISOString().slice(0,10);notes.value=localStorage.getItem('v4_notes')||'';render();showProgress();
+</script><script>if("serviceWorker"in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}</script></body></html>
